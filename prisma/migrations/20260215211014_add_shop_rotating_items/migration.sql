@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ShopItem" ADD COLUMN     "rotating" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0;
