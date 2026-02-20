@@ -64,28 +64,36 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  // Recalculate priority for all tasks (urgency changes with time) and persist
-  const updates = tasks.map((task) => {
-    const score = calculateTaskPriority({
+  // Recalculate priority only for tasks with a dueDate (time-sensitive) whose score has gone stale
+  const STALE_THRESHOLD = 1.0;
+  const freshScores = tasks.map((task) => ({
+    id: task.id,
+    score: calculateTaskPriority({
       dueDate: task.dueDate,
       estimatedTime: task.estimatedTime,
       importance: task.importance,
       category: task.category,
-    });
-    return { id: task.id, score };
+    }),
+  }));
+  const staleUpdates = freshScores.filter((u) => {
+    const existing = tasks.find((t) => t.id === u.id);
+    if (!existing?.dueDate) return false;
+    return Math.abs((existing.priorityScore ?? 0) - u.score) > STALE_THRESHOLD;
   });
 
-  await Promise.all(
-    updates.map((u) =>
-      prisma.task.update({
-        where: { id: u.id },
-        data: { priorityScore: u.score },
-      })
-    )
-  );
+  if (staleUpdates.length > 0) {
+    await Promise.all(
+      staleUpdates.map((u) =>
+        prisma.task.update({
+          where: { id: u.id },
+          data: { priorityScore: u.score },
+        })
+      )
+    );
+  }
 
   const updatedTasks = tasks.map((t) => {
-    const u = updates.find((x) => x.id === t.id);
+    const u = freshScores.find((x) => x.id === t.id);
     return { ...t, priorityScore: u?.score ?? t.priorityScore };
   });
 

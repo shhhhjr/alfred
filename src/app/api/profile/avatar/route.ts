@@ -2,7 +2,7 @@ import { getAuthSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { NextResponse } from "next/server";
 
-const MAX_BYTES = 500 * 1024; // 500KB
+const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const bytes = await file.arrayBuffer();
   if (bytes.byteLength > MAX_BYTES) {
     return NextResponse.json(
-      { error: "Image too large. Max 500KB." },
+      { error: "Image too large. Max 5MB." },
       { status: 400 }
     );
   }

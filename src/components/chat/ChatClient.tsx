@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import ReactMarkdown from "react-markdown";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -69,9 +70,9 @@ function renderMessageContent(
         p.type === "action" ? (
           <ActionCard key={i} description={p.content} />
         ) : (
-          <p key={i} className="whitespace-pre-wrap">
-            {p.content}
-          </p>
+          <div key={i} className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+            <ReactMarkdown>{p.content}</ReactMarkdown>
+          </div>
         )
       )}
     </>

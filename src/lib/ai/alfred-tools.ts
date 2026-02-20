@@ -47,6 +47,7 @@ export function createAlfredTools(userId: string) {
         startTime: z.string().describe("ISO 8601 datetime"),
         endTime: z.string().describe("ISO 8601 datetime"),
         isFixed: z.boolean().default(true),
+        color: z.string().max(20).optional().describe("Hex color code like #3B82F6 for work events, #8B5CF6 for personal, #F59E0B for urgent"),
       }),
       execute: async (input) => {
         const startTime = new Date(input.startTime);
@@ -87,7 +88,7 @@ export function createAlfredTools(userId: string) {
             startTime,
             endTime,
             isFixed: input.isFixed,
-            color: input.isFixed ? "#3B82F6" : "#22C55E",
+            color: input.color ?? (input.isFixed ? "#3B82F6" : "#22C55E"),
             travelTime,
             source: "chat",
           },
@@ -255,6 +256,7 @@ export function createAlfredTools(userId: string) {
             description: z.string().max(2000).optional(),
             category: z.string().max(40).optional(),
             subject: z.string().max(100).optional(),
+            topicName: z.string().max(80).optional().describe("Name of the task topic/category for color-coding"),
             dueDate: z.string().optional(),
             estimatedTime: z.number().int().min(15).max(1440).optional(),
             importance: z.number().int().min(1).max(10).default(5),
@@ -271,6 +273,13 @@ export function createAlfredTools(userId: string) {
             importance: input.importance ?? 5,
             category: input.category ?? null,
           });
+          let topicId: string | undefined;
+          if (input.topicName) {
+            const topic = await prisma.taskTopic.findFirst({
+              where: { userId, name: { equals: input.topicName, mode: "insensitive" } },
+            });
+            if (topic) topicId = topic.id;
+          }
           const task = await prisma.task.create({
             data: {
               userId,
@@ -283,6 +292,7 @@ export function createAlfredTools(userId: string) {
               importance: input.importance ?? 5,
               priorityScore,
               source: "chat",
+              ...(topicId ? { topicId } : {}),
             },
           });
           results.push({
@@ -309,6 +319,7 @@ export function createAlfredTools(userId: string) {
         description: z.string().max(2000).optional(),
         category: z.string().max(40).optional(),
         subject: z.string().max(100).optional(),
+        topicName: z.string().max(80).optional().describe("Name of the task topic/category for color-coding"),
         dueDate: z.string().optional(),
         estimatedTime: z.number().int().min(15).max(1440).optional(),
         importance: z.number().int().min(1).max(10).default(5),
@@ -321,6 +332,13 @@ export function createAlfredTools(userId: string) {
           importance: input.importance ?? 5,
           category: input.category ?? null,
         });
+        let topicId: string | undefined;
+        if (input.topicName) {
+          const topic = await prisma.taskTopic.findFirst({
+            where: { userId, name: { equals: input.topicName, mode: "insensitive" } },
+          });
+          if (topic) topicId = topic.id;
+        }
         const task = await prisma.task.create({
           data: {
             userId,
@@ -333,6 +351,7 @@ export function createAlfredTools(userId: string) {
             importance: input.importance ?? 5,
             priorityScore,
             source: "chat",
+            ...(topicId ? { topicId } : {}),
           },
         });
         return {

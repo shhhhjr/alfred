@@ -22,10 +22,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true, name: true, automationLevel: true },
-  });
+  const [dbUser, userPrefs] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, automationLevel: true },
+    }),
+    prisma.userPreference.findUnique({
+      where: { userId: session.user.id },
+      select: { workHoursStart: true, workHoursEnd: true, breakMinutes: true },
+    }),
+  ]);
   if (!dbUser) {
     return NextResponse.json(
       { error: "Account no longer exists. Please sign in again." },
@@ -78,7 +84,12 @@ export async function POST(req: Request) {
     const modelMessages = await convertToModelMessages(lastTen);
 
     const automationLevel = (dbUser.automationLevel ?? "semi") as "manual" | "semi" | "auto";
-    const systemPrompt = buildAlfredSystemPrompt(dbUser.name ?? null, automationLevel);
+    const schedulePrefs = userPrefs ? {
+      workHoursStart: userPrefs.workHoursStart ?? 9,
+      workHoursEnd: userPrefs.workHoursEnd ?? 17,
+      breakMinutes: userPrefs.breakMinutes ?? 15,
+    } : undefined;
+    const systemPrompt = buildAlfredSystemPrompt(dbUser.name ?? null, automationLevel, schedulePrefs);
 
     const tools = createAlfredTools(session.user.id);
     const result = await streamAssistantReply(systemPrompt, modelMessages, {

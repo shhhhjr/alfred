@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { TodayScheduleClient } from "@/components/dashboard/TodayScheduleClient";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { Card } from "@/components/ui/card";
 import { getAuthSession } from "@/lib/auth/session";
 import { getWalletBalance } from "@/lib/rangs/earn";
@@ -7,6 +8,7 @@ import { computeDailyRatio } from "@/lib/social/productivity";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function HomePage() {
   const session = await getAuthSession();
@@ -60,9 +62,22 @@ export default async function HomePage() {
         take: 5,
       }),
       prisma.emailMessage.findMany({
-        where: { userId, isRead: false },
+        where: {
+          userId,
+          importance: { in: ["high", "medium"] },
+          receivedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+        },
         orderBy: [{ importance: "desc" }, { receivedAt: "desc" }],
-        take: 3,
+        select: {
+          id: true,
+          subject: true,
+          fromAddress: true,
+          importance: true,
+          receivedAt: true,
+          aiSummary: true,
+          isRead: true,
+        },
+        take: 5,
       }),
       prisma.job.findMany({
         where: { userId },
@@ -89,6 +104,22 @@ export default async function HomePage() {
         where: { userId },
       }),
     ]);
+
+  const preferences = await prisma.userPreference.findUnique({ where: { userId } });
+
+  // Morning briefing: create digest notification if notifMorningBrief is on and not yet sent today
+  const todayKey = now.toISOString().slice(0, 10);
+  if (
+    preferences?.notifMorningBrief &&
+    now.getHours() >= (preferences.notifMorningHour ?? 8) &&
+    preferences.lastBriefingDate !== todayKey
+  ) {
+    // Fire and forget — don't block the page
+    fetch(`${process.env.NEXTAUTH_URL ?? ""}/api/notifications/digest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }).catch(() => {});
+  }
 
   const todayStats = await computeDailyRatio(userId, now);
 
@@ -132,6 +163,9 @@ export default async function HomePage() {
 
   return (
     <AppShell>
+      {!preferences?.hasCompletedOnboarding && (
+        <OnboardingModal userName={session.user.name} />
+      )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-3 p-5">
           <h2 className="text-xl font-semibold">Good day, {session.user.name ?? "sir"}.</h2>
@@ -248,6 +282,7 @@ export default async function HomePage() {
           </p>
         </Card>
 
+        <Suspense fallback={<Card className="p-4 animate-pulse"><div className="h-5 w-32 rounded bg-zinc-800" /><div className="mt-3 space-y-2"><div className="h-4 w-full rounded bg-zinc-800" /><div className="h-4 w-3/4 rounded bg-zinc-800" /></div></Card>}>
         <Card className="p-4">
           <h3 className="text-lg font-medium">Task Overview</h3>
           <div className="mt-3 space-y-2 text-sm">
@@ -256,28 +291,36 @@ export default async function HomePage() {
             ) : (
               topTasks.map((task) => (
                 <p key={task.id} className="text-zinc-200">
-                  {task.title} <span className="text-zinc-500">score {task.priorityScore ?? 0}</span>
+                  {task.title} <span className="text-zinc-500">score {Math.round(task.priorityScore ?? 0)}</span>
                 </p>
               ))
             )}
           </div>
         </Card>
+        </Suspense>
 
+        <Suspense fallback={<Card className="p-4 animate-pulse"><div className="h-5 w-32 rounded bg-zinc-800" /><div className="mt-3 space-y-2"><div className="h-4 w-full rounded bg-zinc-800" /><div className="h-4 w-3/4 rounded bg-zinc-800" /></div></Card>}>
         <Card className="p-4">
           <h3 className="text-lg font-medium">Email Digest</h3>
-          <p className="mt-2 text-sm text-zinc-400">Unread important items</p>
-          <div className="mt-3 space-y-2 text-sm">
+          <p className="mt-2 text-sm text-zinc-400">Important emails in the last 24 hours</p>
+          <div className="mt-3 space-y-3 text-sm">
             {unreadEmails.length === 0 ? (
-              <p className="text-zinc-400">No unread email metadata yet.</p>
+              <p className="text-zinc-400">No important emails in the last 24 hours.</p>
             ) : (
               unreadEmails.map((email) => (
-                <p key={email.id} className="text-zinc-200">
-                  {email.subject} <span className="text-zinc-500">({email.importance})</span>
-                </p>
+                <div key={email.id} className="border-l-2 border-zinc-700 pl-2">
+                  <p className="text-zinc-200 font-medium">{email.subject}</p>
+                  {email.aiSummary ? (
+                    <p className="mt-0.5 text-xs text-zinc-400 line-clamp-2">{email.aiSummary}</p>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-zinc-500">{email.importance} importance</p>
+                  )}
+                </div>
               ))
             )}
           </div>
         </Card>
+        </Suspense>
 
         <Card className="p-4">
           <h3 className="text-lg font-medium">Job Search Status</h3>

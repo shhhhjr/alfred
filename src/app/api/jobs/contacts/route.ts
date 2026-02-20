@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
         contactName: contact.name,
         contactEmail: contact.email,
         contactTitle: contact.title,
+        contactPhone: contact.phone ?? null,
       },
     });
 
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
         name: updated.contactName,
         email: updated.contactEmail,
         title: updated.contactTitle,
+        phone: updated.contactPhone,
       },
     });
   } catch (err) {

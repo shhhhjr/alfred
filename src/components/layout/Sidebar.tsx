@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, BriefcaseBusiness, LayoutDashboard, Mail, MessageSquare, Settings, ShoppingBag, SquareCheckBig, UserCircle2, Users } from "lucide-react";
+import { Calendar, BriefcaseBusiness, GraduationCap, LayoutDashboard, Mail, MessageSquare, Settings, ShoppingBag, SquareCheckBig, UserCircle2, Users } from "lucide-react";
 import Image from "next/image";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/tasks", label: "Tasks", icon: SquareCheckBig },
+  { href: "/school", label: "School", icon: GraduationCap },
   { href: "/shop", label: "Shop", icon: ShoppingBag },
   { href: "/lead-gen", label: "Lead Gen", icon: Users },
   { href: "/email", label: "Email", icon: Mail },

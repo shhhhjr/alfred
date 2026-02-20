@@ -1,5 +1,11 @@
 export type AutomationLevel = "manual" | "semi" | "auto";
 
+export type UserSchedulePrefs = {
+  workHoursStart: number;
+  workHoursEnd: number;
+  breakMinutes: number;
+};
+
 /**
  * Get current date/time context for Alfred to interpret relative dates.
  */
@@ -28,7 +34,8 @@ ISO: ${iso}`;
  */
 export function buildAlfredSystemPrompt(
   userName: string | null,
-  automationLevel: AutomationLevel
+  automationLevel: AutomationLevel,
+  schedulePrefs?: UserSchedulePrefs
 ): string {
   const name = userName?.trim() || "sir";
 
@@ -39,7 +46,19 @@ export function buildAlfredSystemPrompt(
         ? "The user uses semi-automation. You may propose actions; they will approve or decline."
         : "The user prefers automation. Propose and execute helpful actions where appropriate.";
 
+  const start = schedulePrefs?.workHoursStart ?? 9;
+  const end = schedulePrefs?.workHoursEnd ?? 17;
+  const fmt = (h: number) => {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${hour}:00 ${ampm}`;
+  };
+  const scheduleNote = `The user's working day runs from ${fmt(start)} to ${fmt(end)}. When scheduling tasks or work blocks WITHOUT an explicit time, place them within this window. NEVER schedule work outside this window unless the user explicitly specifies a time outside it. Fixed events (classes, meetings, exams) can be outside this window if the user gives a specific time.`;
+
   return `You are Alfred, a personal AI assistant named after Batman's legendary butler.
+
+${scheduleNote}
+
 
 Personality:
 - Proactive but respectful. Stay one step ahead without overstepping.

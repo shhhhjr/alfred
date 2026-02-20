@@ -4,6 +4,7 @@ export type ContactInfo = {
   name: string;
   email: string;
   title: string;
+  phone?: string;
 };
 
 export type FindContactResult =
@@ -112,6 +113,7 @@ async function findWithHunter(domain: string, roleTitle?: string): Promise<Conta
         last_name?: string;
         position?: string;
         seniority?: string;
+        phone_number?: string;
       }>;
     };
   };
@@ -138,6 +140,7 @@ async function findWithHunter(domain: string, roleTitle?: string): Promise<Conta
     name: `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Hiring Manager",
     email: contact.value,
     title: contact.position || "Hiring Manager",
+    phone: contact.phone_number || undefined,
   };
 }
 
@@ -171,6 +174,7 @@ async function findWithApollo(company: string, roleTitle?: string): Promise<Cont
       last_name?: string;
       email?: string;
       title?: string;
+      phone_numbers?: Array<{ sanitized_number?: string }>;
     }>;
   };
 
@@ -184,5 +188,6 @@ async function findWithApollo(company: string, roleTitle?: string): Promise<Cont
     name: `${person.first_name || ""} ${person.last_name || ""}`.trim() || "Hiring Manager",
     email: person.email,
     title: person.title || "Hiring Manager",
+    phone: person.phone_numbers?.[0]?.sanitized_number || undefined,
   };
 }

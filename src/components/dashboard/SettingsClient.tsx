@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,6 +25,9 @@ type SettingsResponse = {
     workHoursEnd?: number | null;
     breakMinutes?: number | null;
     automationLevelNote?: string | null;
+    notifEmailDigest?: boolean | null;
+    notifPush?: boolean | null;
+    notifMorningBrief?: boolean | null;
   } | null;
 };
 
@@ -185,6 +187,10 @@ export function SettingsClient() {
           setJobKeywords(job.keywords);
           setJobLocations(job.locations);
           setJobExcludedCompanies(job.excludedCompanies);
+
+          setNotifEmailDigest(prefs?.notifEmailDigest ?? false);
+          setNotifPush(prefs?.notifPush ?? false);
+          setNotifMorningBrief(prefs?.notifMorningBrief ?? false);
         } else {
           setStatus("Unable to load settings.");
         }
@@ -245,6 +251,9 @@ export function SettingsClient() {
           jobSearchKeywords: jobKeywords,
           jobSearchLocations: jobLocations,
           jobSearchExcludedCompanies: jobExcludedCompanies,
+          notifEmailDigest,
+          notifPush,
+          notifMorningBrief,
         }),
       });
       const ok = res.ok;
@@ -696,10 +705,9 @@ export function SettingsClient() {
         <Card id="job-search" className="border-zinc-800 bg-zinc-950/60 p-5">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-zinc-100">Job search</h2>
-            <Badge className="bg-zinc-800 text-xs text-zinc-300">Coming in Phase 2</Badge>
           </div>
           <p className="mt-1 text-sm text-zinc-400">
-            Configure how Alfred should search for internships and jobs. Saved now; actions later.
+            Configure how Alfred should search for internships and jobs.
           </p>
           <div className="mt-4 space-y-3">
             <div className="space-y-1">
@@ -733,10 +741,9 @@ export function SettingsClient() {
         <Card id="notifications" className="border-zinc-800 bg-zinc-950/60 p-5">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-zinc-100">Notifications</h2>
-            <Badge className="bg-zinc-800 text-xs text-zinc-300">Coming soon</Badge>
           </div>
           <p className="mt-1 text-sm text-zinc-400">
-            Control digests and briefings from Alfred. These toggles are placeholders for now.
+            Control digests and briefings from Alfred.
           </p>
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
@@ -744,21 +751,21 @@ export function SettingsClient() {
                 <p className="text-sm text-zinc-100">Email digest</p>
                 <p className="text-xs text-zinc-500">Summary of tasks and events sent by email.</p>
               </div>
-              <Switch checked={notifEmailDigest} disabled onCheckedChange={setNotifEmailDigest} />
+              <Switch checked={notifEmailDigest} onCheckedChange={setNotifEmailDigest} />
             </div>
             <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
               <div>
                 <p className="text-sm text-zinc-100">Push notifications</p>
                 <p className="text-xs text-zinc-500">Real-time alerts on important changes.</p>
               </div>
-              <Switch checked={notifPush} disabled onCheckedChange={setNotifPush} />
+              <Switch checked={notifPush} onCheckedChange={setNotifPush} />
             </div>
             <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
               <div>
                 <p className="text-sm text-zinc-100">Daily morning briefing</p>
                 <p className="text-xs text-zinc-500">A quick summary of your day each morning.</p>
               </div>
-              <Switch checked={notifMorningBrief} disabled onCheckedChange={setNotifMorningBrief} />
+              <Switch checked={notifMorningBrief} onCheckedChange={setNotifMorningBrief} />
             </div>
           </div>
         </Card>

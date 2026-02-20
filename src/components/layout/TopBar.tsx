@@ -2,6 +2,7 @@ import { getAuthSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export async function TopBar() {
   const session = await getAuthSession();
@@ -20,8 +21,9 @@ export async function TopBar() {
       </div>
 
       {session ? (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <p className="text-sm text-zinc-300">Automation: {session.user.automationLevel}</p>
+          <NotificationBell />
           <SignOutButton />
         </div>
       ) : (

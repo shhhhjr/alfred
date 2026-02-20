@@ -57,7 +57,7 @@ export function ProfileAvatarClient({ initialUrl }: Props) {
     <Card className="p-6">
       <h2 className="text-lg font-semibold">Profile picture</h2>
       <p className="mt-1 text-sm text-zinc-400">
-        Upload a photo. Max 500KB, JPEG/PNG/WebP/GIF.
+        Upload a photo. Max 5MB, JPEG/PNG/WebP/GIF.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <div

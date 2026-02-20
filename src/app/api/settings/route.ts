@@ -20,6 +20,10 @@ const settingsSchema = z.object({
   jobSearchKeywords: z.string().trim().max(500).optional(),
   jobSearchLocations: z.string().trim().max(500).optional(),
   jobSearchExcludedCompanies: z.string().trim().max(500).optional(),
+  notifEmailDigest: z.boolean().optional(),
+  notifPush: z.boolean().optional(),
+  notifMorningBrief: z.boolean().optional(),
+  hasCompletedOnboarding: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -106,6 +110,10 @@ async function handleUpdate(request: Request) {
         ...("profileHeadline" in data ? { profileHeadline: data.profileHeadline } : {}),
         ...("profileBio" in data ? { profileBio: data.profileBio } : {}),
         ...(automationLevelNote !== undefined ? { automationLevelNote } : {}),
+        ...("notifEmailDigest" in data ? { notifEmailDigest: data.notifEmailDigest } : {}),
+        ...("notifPush" in data ? { notifPush: data.notifPush } : {}),
+        ...("notifMorningBrief" in data ? { notifMorningBrief: data.notifMorningBrief } : {}),
+        ...("hasCompletedOnboarding" in data ? { hasCompletedOnboarding: data.hasCompletedOnboarding } : {}),
       },
       create: {
         userId: session.user.id,
@@ -119,6 +127,10 @@ async function handleUpdate(request: Request) {
         profileVisibility: data.profileVisibility ?? "private",
         profileHeadline: data.profileHeadline,
         profileBio: data.profileBio,
+        notifEmailDigest: data.notifEmailDigest ?? false,
+        notifPush: data.notifPush ?? false,
+        notifMorningBrief: data.notifMorningBrief ?? false,
+        hasCompletedOnboarding: data.hasCompletedOnboarding ?? false,
         automationLevelNote:
           automationLevelNote ??
           existingPref?.automationLevelNote ??

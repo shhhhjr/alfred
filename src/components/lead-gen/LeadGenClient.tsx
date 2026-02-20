@@ -74,7 +74,7 @@ function entryToForm(e: Entry) {
 function formatDate(s: string | null): string {
   if (!s) return "—";
   const d = new Date(s);
-  return d.toLocaleDateString(undefined, { dateStyle: "short", timeStyle: "short" });
+  return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
 function ContactRow({ label, value, href }: { label: string; value: string | null; href?: string }) {

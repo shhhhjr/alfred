@@ -127,6 +127,34 @@ export function EmailHubClient() {
     fetchMessages();
   }, [fetchMessages]);
 
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [syncMinutesAgo, setSyncMinutesAgo] = useState<number | null>(null);
+
+  // Auto-sync every 30 minutes
+  useEffect(() => {
+    const SYNC_INTERVAL_MS = 30 * 60 * 1000;
+    const intervalId = setInterval(async () => {
+      try {
+        await fetch("/api/email/sync", { method: "POST" });
+        await fetchMessages();
+        setLastSyncedAt(new Date());
+      } catch {
+        // silent failure
+      }
+    }, SYNC_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [fetchMessages]);
+
+  // Update "X min ago" display every minute
+  useEffect(() => {
+    if (!lastSyncedAt) return;
+    const tick = setInterval(() => {
+      setSyncMinutesAgo(Math.floor((Date.now() - lastSyncedAt.getTime()) / 60000));
+    }, 60000);
+    setSyncMinutesAgo(0);
+    return () => clearInterval(tick);
+  }, [lastSyncedAt]);
+
   const handleSync = async () => {
     setSyncLoading(true);
     try {
@@ -135,6 +163,7 @@ export function EmailHubClient() {
       if (data.ok) {
         await fetchAccounts();
         await fetchMessages();
+        setLastSyncedAt(new Date());
         setToast(data.message ?? "Sync complete");
       } else {
         setToast(data.error ?? "Sync failed");
@@ -279,9 +308,14 @@ export function EmailHubClient() {
       <Card className="flex w-48 min-w-[120px] shrink-0 flex-col overflow-hidden p-2">
         <div className="flex items-center justify-between gap-1">
           <h2 className="truncate text-sm font-semibold">Accounts</h2>
-          <Button size="sm" variant="outline" onClick={handleSync} disabled={syncLoading} className="shrink-0 text-xs">
-            {syncLoading ? "…" : "Sync"}
-          </Button>
+          <div className="flex flex-col items-end gap-0.5">
+            <Button size="sm" variant="outline" onClick={handleSync} disabled={syncLoading} className="shrink-0 text-xs">
+              {syncLoading ? "…" : "Sync"}
+            </Button>
+            {syncMinutesAgo !== null && (
+              <span className="text-[9px] text-zinc-500">{syncMinutesAgo === 0 ? "just now" : `${syncMinutesAgo}m ago`}</span>
+            )}
+          </div>
         </div>
         <ScrollArea className="mt-2 flex-1 min-h-0">
           <div className="space-y-1">
