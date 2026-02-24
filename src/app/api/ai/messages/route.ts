@@ -12,10 +12,13 @@ export async function GET() {
 
   const rows = await prisma.chatMessage.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     take: LIMIT,
     select: { id: true, role: true, content: true },
   });
+
+  // Reverse to chronological order (oldest first) for display
+  rows.reverse();
 
   const messages = rows.map((m) => ({
     id: m.id,
