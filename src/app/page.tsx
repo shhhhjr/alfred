@@ -92,6 +92,7 @@ export default async function HomePage() {
           completedAt: { gte: streakWindowStart },
         },
         select: { completedAt: true, estimatedTime: true },
+        take: 200,
       }),
       prisma.productivitySnapshot.findMany({
         where: {
@@ -99,6 +100,7 @@ export default async function HomePage() {
           createdAt: { gte: streakWindowStart },
         },
         select: { createdAt: true, productiveMinutes: true },
+        take: 200,
       }),
       prisma.socialSettings.findUnique({
         where: { userId },
