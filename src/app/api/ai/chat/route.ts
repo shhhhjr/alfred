@@ -151,13 +151,9 @@ export async function POST(req: Request) {
       workHoursEnd: userPrefs.workHoursEnd ?? 17,
       breakMinutes: userPrefs.breakMinutes ?? 15,
     } : undefined;
-    const userTimezone =
-      req.headers.get("x-user-timezone") ||
-      (userPrefs as { timezone?: string } | null)?.timezone ||
-      "America/New_York";
-    const systemPrompt = buildAlfredSystemPrompt(dbUser.name ?? null, automationLevel, schedulePrefs, userTimezone);
+    const systemPrompt = buildAlfredSystemPrompt(dbUser.name ?? null, automationLevel, schedulePrefs);
 
-    const tools = createAlfredTools(session.user.id, userTimezone);
+    const tools = createAlfredTools(session.user.id);
     const result = await streamAssistantReply(systemPrompt, modelMessages, {
       tools,
       maxToolSteps: 10,
