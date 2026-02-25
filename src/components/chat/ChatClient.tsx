@@ -83,6 +83,7 @@ export function ChatClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const prevMessagesLength = useRef(0);
+  const userHasSentRef = useRef(false);
   const searchParams = useSearchParams();
   const promptFromUrl = searchParams.get("prompt");
 
@@ -134,6 +135,7 @@ export function ChatClient() {
     e.preventDefault();
     const value = input.trim();
     if (!value) return;
+    userHasSentRef.current = true;
     setInput("");
     sendMessage({ text: value });
   }
