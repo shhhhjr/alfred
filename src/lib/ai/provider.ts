@@ -12,8 +12,8 @@ const GROQ_MODEL = "llama-3.1-8b-instant";
 const MINIMAX_MODEL = "MiniMax-M2";
 
 /**
- * Unified AI provider: Gemini 2.5 Flash primary, Groq (Llama 3.1) fallback.
- * If Gemini rate limits, automatically fall back to Groq.
+ * Unified AI provider. Order: MiniMax (subscription) → Gemini → Groq.
+ * MiniMax first if you have a subscription to avoid free-tier limits.
  */
 export async function streamAssistantReply(
   system: string,
@@ -32,38 +32,46 @@ export async function streamAssistantReply(
       : {}),
   };
 
-  if (env.GEMINI_API_KEY) {
+  const tryProvider = async (name: string, fn: () => Promise<StreamResult>) => {
     try {
-      return streamText({
-        ...baseOptions,
-        model: google(GEMINI_MODEL),
-      });
+      return await fn();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      const isRateLimit = /rate limit|429|quota|resource exhausted/i.test(msg);
-      if (!isRateLimit) throw err;
+      const isRateLimit = /rate limit|429|quota|resource exhausted|exceeded/i.test(msg);
+      if (isRateLimit) console.warn(`[AI] ${name} rate limited, trying next provider`);
+      throw err;
+    }
+  };
+
+  if (env.MINIMAX_API_KEY) {
+    try {
+      return await tryProvider("MiniMax", () =>
+        streamText({ ...baseOptions, model: minimax(MINIMAX_MODEL) })
+      );
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (env.GEMINI_API_KEY) {
+    try {
+      return await tryProvider("Gemini", () =>
+        streamText({ ...baseOptions, model: google(GEMINI_MODEL) })
+      );
+    } catch {
+      /* fall through */
     }
   }
 
   if (env.GROQ_API_KEY) {
     try {
-      return streamText({
-        ...baseOptions,
-        model: groq(GROQ_MODEL),
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const isRateLimit = /rate limit|429|quota|resource exhausted/i.test(msg);
-      if (!isRateLimit) throw err;
+      return await tryProvider("Groq", () =>
+        streamText({ ...baseOptions, model: groq(GROQ_MODEL) })
+      );
+    } catch {
+      /* fall through */
     }
   }
 
-  if (env.MINIMAX_API_KEY) {
-    return streamText({
-      ...baseOptions,
-      model: minimax(MINIMAX_MODEL),
-    });
-  }
-
-  throw new Error("No AI provider available. Add GEMINI_API_KEY, GROQ_API_KEY, or MINIMAX_API_KEY.");
+  throw new Error("No AI provider available. Add MINIMAX_API_KEY, GEMINI_API_KEY, or GROQ_API_KEY to .env");
 }

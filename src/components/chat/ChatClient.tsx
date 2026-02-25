@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ActionCard } from "./ActionCard";
@@ -86,8 +86,9 @@ export function ChatClient() {
   const searchParams = useSearchParams();
   const promptFromUrl = searchParams.get("prompt");
 
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/ai/chat" }), []);
   const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
+    transport,
     messages: [],
   });
 
